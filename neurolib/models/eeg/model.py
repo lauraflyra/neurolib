@@ -22,6 +22,12 @@ class EEGModel:
         self.raw = None
         self.raw_fname, = eegbci.load_data(subject=1, runs=[6])
         self.loadRawData()
+        
+        #attributes needed to make forward solution
+        self.mindist = 0.0
+        self.ignore_ref = False #we don't understand this
+        self.n_jobs = 1
+        self.N = N #this is number of nodes
 
 
 
@@ -108,7 +114,7 @@ class EEGModel:
         if type == 'surface':
             spacing = kwargs.get("spacing", 'oct6')
             add_dist = kwargs.get("add_dist", 'patch')
-            n_jobs = kwargs.get("n_jobs", 1)
+            self.n_jobs = kwargs.get("n_jobs", 1)
             surface = kwargs.get("surface",'white')
             verbose = kwargs.get("verbose", None)
 
@@ -122,7 +128,7 @@ class EEGModel:
             sphere = kwargs.get("sphere", None)
             bem = self.bem
             surface = kwargs.get("surface", None)
-            mindist = kwargs.get("mindist",5.0)
+            self.mindist = kwargs.get("mindist",5.0)
             exclude = kwargs.get("exclude", 0.)
             volume_label = kwargs.get("volume_label", None)
             add_interpolator = kwargs.get("add_interpolator", True)
@@ -131,7 +137,7 @@ class EEGModel:
             verbose = kwargs.get("verbose", None)
 
             self.src = mne.setup_volume_source_space(subject=self.subject, pos=pos, mri=mri, sphere=sphere, bem=bem,
-                                        surface=surface,mindist=mindist, exclude=exclude,
+                                        surface=surface,mindist=self.mindist, exclude=exclude,
                                         subjects_dir=self.subjects_dir, volume_label=volume_label,
                                         add_interpolator=add_interpolator,sphere_units=sphere_units,
                                         single_volume=single_volume, verbose=verbose)
@@ -151,17 +157,34 @@ class EEGModel:
         self.raw_fname = raw_fname
         self.loadRawData(montage_name=montage_name)
 
+    def downsampling(self):
+        #output size = self.N
+        pass
 
-    def run(self,  activity, append):
+    def run(self,  activity, append = False):
+        #append is when the simulation was already run before and we want to continue to run it
+        
+        
         #this is supposed to do the matrix multiplication leadfield @ activity
         #check wether we downsample here or not, ask Martin and Maria about downsampling
         #maybe this doesnt make sense, maybe calculate leadfields here and not before???
 
 
-        leadfield = mne.make_forward_model()
+        forward_solution = mne.make_forward_solution(self.raw.info, trans=self.trans, src=self.src, bem=self.bem,
+                                meg=False, eeg=True, mindist=self.mindist, n_jobs=self.n_jobs,
+                                verbose=True)
 
+        fwd_fixed = mne.convert_forward_solution(forward_solution, surf_ori=True, force_fixed=True,
+                                                 use_cps=True)
+        leadfield = fwd_fixed['sol']['data']
 
-        result = leadfield @ activity
+        
+        # somewhere here should be the downsampling function
+        downsampled = downsampling(self, leadfield, atlas, averaging_method)
+
+        #which type of activity are we expecting here? Firing rates?
+
+        result = downsampled @ activity
         return result
 
 

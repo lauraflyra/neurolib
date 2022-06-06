@@ -3,6 +3,7 @@ import xarray as xr
 import numpy as np
 
 from ..models import bold
+from ..model import eeg
 
 from ..utils.collections import dotdict
 
@@ -185,6 +186,7 @@ class Model:
         chunkwise=False,
         chunksize=None,
         bold=False,
+        eeg=False,
         append=False,
         append_outputs=None,
         continue_run=False,
@@ -242,6 +244,12 @@ class Model:
 
         # check if there was a problem with the simulated data
         self.checkOutputs()
+        # check which part of the output we need
+        # eeg_input = output.X
+
+        # if self.eegInputTransform:
+        #     eeg_input = self.eegInputTransform(eeg_input)
+        # self.eegModel.run(activity = eeg_input, append = bla)
 
     def checkOutputs(self):
         # check nans in output
