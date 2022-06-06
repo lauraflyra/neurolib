@@ -5,93 +5,157 @@ from mne.datasets import eegbci
 from mne.datasets import fetch_fsaverage
 import os.path as op
 
-###################
-
-# In a different file or functions or whatever, the user would be able to set up their bem and source space, and then
-# those are already given to the class
-
-
 
 
 class EEGModel:
 
-    def __init__(self, params, N, subject="fsaverage", subject_dir = None, trans=None, src=None, bem=None, raw_fname = None):
-
-        self.subject = subject
-        # subject should always be a string
-        # assert subject is string
-
-        self.subject_dir = subject_dir
-        # have supported data file and path
-
-        self.src = src
-        # assert src is correct file type
-        self.trans = trans  # do we calculate trans if not given?? Or do we use fsaverage trans?
-        self.bem = bem
-        # assert bem is correct file type
-
-        if self.subject == "fsaverage":
-            self.loadSubjectData()
-
-        self.raw_fname = raw_fname #info gives electrodes positions
-        #check that raw_fname is in the correct format
-        # assert raw_fname is edf file
-
-        if self.raw_fname is None:
-            # we use what's in example in mne
-            self.raw_fname, = eegbci.load_data(subject=1, runs=[6])
-        self.loadRawData()
-        pass
-
-
-    def loadSubjectData(self):
+    # def __init__(self, params, N, subject="fsaverage", subject_dir = None, trans=None, src=None, bem=None, raw_fname = None):
+    def __init__(self, params, N):
 
         fs_dir = fetch_fsverage(verbose=True)
-        subjects_dir = op.dirname(fs_dir)
-        self.trans = "fsaverage"
-        if self.src is None:
-            self.src = op.join(fs_dir, 'bem', 'fsaverage-ico-5-src.fif')
-        if self.bem is None:
-            self.bem = op.join(fs_dir, 'bem', 'fsaverage-5120-5120-5120-bem-sol.fif')
+        self.subjects_dir = op.dirname(fs_dir)
+        self.subject = 'fsaverage'
+        self.subject_dir = None
+        self.trans = 'fsaverage'
+        self.src = op.join(fs_dir, 'bem', 'fsaverage-ico-5-src.fif')
+        self.bem = op.join(fs_dir, 'bem', 'fsaverage-5120-5120-5120-bem-sol.fif')
+        self.raw = None
+        self.raw_fname, = eegbci.load_data(subject=1, runs=[6])
+        self.loadRawData()
 
 
 
-    def loadRawData(self):
-        raw = mne.io.read_raw_edf(self.raw_fname, preload=True)
+ ##########################################
+        # First draft that was temporarily rejected
+        #
+        #
+        # self.subject = subject
+        #
+        # # subject should always be a string
+        # # assert subject is string
+        #
+        # self.subject_dir = subject_dir
+        # # have supported data file and path
+        #
+        # self.src = src
+        # # assert src is correct file type
+        # self.trans = trans  # do we calculate trans if not given?? Or do we use fsaverage trans?
+        # self.bem = bem
+        # # assert bem is correct file type
+        #
+        # if self.subject == "fsaverage":
+        #     self.loadSubjectData()
+        #
+        # self.raw_fname = raw_fname #info gives electrodes positions
+        # #check that raw_fname is in the correct format
+        # # assert raw_fname is edf file
+        #
+        # if self.raw_fname is None:
+        #     # we use what's in example in mne
+        #     self.raw_fname, = eegbci.load_data(subject=1, runs=[6])
+        # self.loadRawData()
+        # pass
+
+    #
+    # def loadSubjectData(self):
+    #
+    #     fs_dir = fetch_fsverage(verbose=True)
+    #     subjects_dir = op.dirname(fs_dir)
+    #     self.trans = "fsaverage"
+    #     if self.src is None:
+    #         self.src = op.join(fs_dir, 'bem', 'fsaverage-ico-5-src.fif')
+    #     if self.bem is None:
+    #         self.bem = op.join(fs_dir, 'bem', 'fsaverage-5120-5120-5120-bem-sol.fif')
+    #
+
+
+    def loadRawData(self, montage_name='standard_1005'):
+        self.raw = mne.io.read_raw_edf(self.raw_fname, preload=True)
 
         # Clean channel names to be able to use a standard 1005 montage
-        new_names = dict(
-            (ch_name,
-             ch_name.rstrip('.').upper().replace('Z', 'z').replace('FP', 'Fp'))
-            for ch_name in raw.ch_names)
-        raw.rename_channels(new_names)
+        # check how this would be for a diff montage!
+        if montage_name == 'standard_1005':
+            new_names = dict(
+                (ch_name,
+                 ch_name.rstrip('.').upper().replace('Z', 'z').replace('FP', 'Fp'))
+                for ch_name in raw.ch_names)
+            self.raw.rename_channels(new_names)
+        else:
+            pass
 
         # Read and set the EEG electrode locations, which are already in fsaverage's
         # space (MNI space) for standard_1020:
-        montage = mne.channels.make_standard_montage('standard_1005')
-        raw.set_montage(montage)
-        raw.set_eeg_reference(projection=True)  # needed for inverse modeling
+        montage = mne.channels.make_standard_montage(montage_name)
+        self.raw.set_montage(montage)
+        self.raw.set_eeg_reference(projection=True)  # needed for inverse modeling
 
-    def set_src(self):
-        pass
+    def set_subject_and_trans(self, subject, subject_dir, trans):
+        #do some assertions here
+        self.subject = subject
+        self.subject_dir = subject_dir
+        self.trans = trans
 
-    def set_bem(self):
-        pass
+        print("If you change here, you should check that bem/trans/raw are accordingly modified")
+
+    def set_bem(self, ico = 4, conductivity = (0.3,0.006, 0.3), verbose = None):
+        print("If you set the volumetric source with the bem before this, do it again! Otherwise, it's using the bem from the fsaverage!!")
+
+        model = mne.make_bem_model(self.subject, ico = ico, conductivity = conductivity,
+                                   subjects_dir = self.subjects_dir, verbose = verbose)
+        self.bem = mne.make_bem_solution(model)
+
+    def set_src(self, type = 'volumetric', **kwargs):
+        if type == 'surface':
+            spacing = kwargs.get("spacing", 'oct6')
+            add_dist = kwargs.get("add_dist", 'patch')
+            n_jobs = kwargs.get("n_jobs", 1)
+            surface = kwargs.get("surface",'white')
+            verbose = kwargs.get("verbose", None)
+
+            self.src = mne.setup_source_space(self.subject, subject_dir = self.subject_dir, spacing = spacing,
+                                    add_dist = add_dist, n_jobs = n_jobs, surface = surface, verbose = verbose)
+
+        if type == 'volumetric':
+
+            pos = kwargs.get("pos", 5.0)
+            mri = kwargs.get("mri",None)
+            sphere = kwargs.get("sphere", None)
+            bem = self.bem
+            surface = kwargs.get("surface", None)
+            mindist = kwargs.get("mindist",5.0)
+            exclude = kwargs.get("exclude", 0.)
+            volume_label = kwargs.get("volume_label", None)
+            add_interpolator = kwargs.get("add_interpolator", True)
+            sphere_units = kwargs.get("sphere_units", 'm')
+            single_volume = kwargs.get("single_volume", False)
+            verbose = kwargs.get("verbose", None)
+
+            self.src = mne.setup_volume_source_space(subject=self.subject, pos=pos, mri=mri, sphere=sphere, bem=bem,
+                                        surface=surface,mindist=mindist, exclude=exclude,
+                                        subjects_dir=self.subjects_dir, volume_label=volume_label,
+                                        add_interpolator=add_interpolator,sphere_units=sphere_units,
+                                        single_volume=single_volume, verbose=verbose)
+
+        #if the person wants to know which kwargs to use, they should refer to the mne library
+
+
+
+    # def set_trans(self):
+    #
+    #     print("You can do it yourself using mne.gui.corregistration!")
+    #
+    #     print("If you change here, you should check that bem/trans/raw are accordingly modified")
+    #     pass
+
+    def set_raw(self, raw_fname, montage_name='standard_1005'):
+        self.raw_fname = raw_fname
+        self.loadRawData(montage_name=montage_name)
+
 
     def run(self,  activity, append):
         #this is supposed to do the matrix multiplication leadfield @ activity
         #check wether we downsample here or not, ask Martin and Maria about downsampling
         #maybe this doesnt make sense, maybe calculate leadfields here and not before???
-
-        #check if self.subject == fsaverage
-        #else:
-        #    self.loadSubjectData
-
-        if self.src is None:
-            self.src = make_source() # do we put them in this class or in separate file??
-
-        if self.bem is None:
-            self.bem = make_bem() # do we put them in this class or in separate file??
 
 
         leadfield = mne.make_forward_model()
