@@ -50,6 +50,8 @@ class Model:
 
         self.boldInitialized = False
 
+        self.eegModel = None
+
         logging.info(f"{self.name}: Model initialized.")
 
     def initializeBold(self):

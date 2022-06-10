@@ -20,7 +20,16 @@ class EEGModel:
         self.src = op.join(fs_dir, 'bem', 'fsaverage-ico-5-src.fif')
         self.bem = op.join(fs_dir, 'bem', 'fsaverage-5120-5120-5120-bem-sol.fif')
         self.raw = None
-        self.raw_fname, = eegbci.load_data(subject=1, runs=[6])
+        self.raw_fname, = eegbci.load_data(subject=1, runs=[6]) # run doesnt matter
+        # we should be able to get the montage and channels that are used.
+        # There should be a way to do this without loading eeg data
+        # check how mne handles montages, no need to do in neurolib
+        #mne has a function to create the info file, so we dont need eeg data
+        # create info based on params
+        # treat subject and trans file as the same thing, we should always have one trans file per subject
+
+
+
         self.loadRawData()
         
         #attributes needed to make forward solution
@@ -28,6 +37,8 @@ class EEGModel:
         self.ignore_ref = False #we don't understand this
         self.n_jobs = 1
         self.N = N #this is number of nodes
+
+        #everything that the user can change should go to params
 
 
 
@@ -183,6 +194,11 @@ class EEGModel:
         downsampled = downsampling(self, leadfield, atlas, averaging_method)
 
         #which type of activity are we expecting here? Firing rates?
+        # we need to think about units, it's in mV, conductivities also have units.
+        # activity should probably be in Hz, not kHz as in aln.
+        # Hopf has no units
+        # Try first with aln, and figure out the correct scale. Then figure out other models without units.
+        
 
         result = downsampled @ activity
         return result
