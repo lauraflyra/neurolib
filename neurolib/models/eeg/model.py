@@ -10,7 +10,17 @@ import os.path as op
 class EEGModel:
 
     # def __init__(self, params, N, subject="fsaverage", subject_dir = None, trans=None, src=None, bem=None, raw_fname = None):
-    def __init__(self, params, N):
+    def __init__(self, params):
+
+        if params.get("eeg_subject_dir") is None:
+            self.subjects_dir = op.dirname(fs_dir)
+        else:
+            self.subjects_dir = params.get("eeg_subject_dir")
+
+        #When the user doesnt change all params accordingly we should give a warning saying it's gonna run with default
+        #values 
+
+
 
         fs_dir = fetch_fsverage(verbose=True)
         self.subjects_dir = op.dirname(fs_dir)
@@ -185,9 +195,7 @@ class EEGModel:
                                 meg=False, eeg=True, mindist=self.mindist, n_jobs=self.n_jobs,
                                 verbose=True)
 
-        fwd_fixed = mne.convert_forward_solution(forward_solution, surf_ori=True, force_fixed=True,
-                                                 use_cps=True)
-        leadfield = fwd_fixed['sol']['data']
+        leadfield = forward_solution['sol']['data']
 
         
         # somewhere here should be the downsampling function
