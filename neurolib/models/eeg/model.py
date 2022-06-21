@@ -29,13 +29,16 @@ class EEGModel:
         self.trans = 'fsaverage'
         self.src = op.join(fs_dir, 'bem', 'fsaverage-ico-5-src.fif')
         self.bem = op.join(fs_dir, 'bem', 'fsaverage-5120-5120-5120-bem-sol.fif')
-        self.raw = None
-        self.raw_fname, = eegbci.load_data(subject=1, runs=[6]) # run doesnt matter
-        # we should be able to get the montage and channels that are used.
-        # There should be a way to do this without loading eeg data
-        # check how mne handles montages, no need to do in neurolib
-        #mne has a function to create the info file, so we dont need eeg data
-        # create info based on params
+
+        if params.get("kind") is None:
+            self.kind = "standard_1020"
+        else:
+            self.kind = params.get("kind")
+        # same for head_size, sfreq, ch_types ?
+        montage = mne.channels.make_standard_montage(kind, head_size='auto')
+        info = mne.create_info(ch_names=montage.ch_names, sfreq=100., ch_types='eeg')
+        info.set_montage(montage)
+
         # treat subject and trans file as the same thing, we should always have one trans file per subject
 
 
