@@ -4,18 +4,23 @@ import mne
 from mne.datasets import eegbci
 from mne.datasets import fetch_fsaverage
 import os.path as op
+from . import loadDefaultParams as dp
 
 
 
 class EEGModel:
 
     # def __init__(self, params, N, subject="fsaverage", subject_dir = None, trans=None, src=None, bem=None, raw_fname = None):
-    def __init__(self, params):
+    def __init__(self, model, params=None):
 
-        if params.get("eeg_subject_dir") is None:
-            self.subjects_dir = op.dirname(fs_dir)
-        else:
-            self.subjects_dir = params.get("eeg_subject_dir")
+        model.params
+        if params is None:
+            params = dp.loadDefaultParams()
+
+        # if params.get("eeg_subject_dir") is None:
+        #     self.subjects_dir = op.dirname(fs_dir)
+        # else:
+        #     self.subjects_dir = params.get("eeg_subject_dir")
 
         #When the user doesnt change all params accordingly we should give a warning saying it's gonna run with default
         #values 
