@@ -7,75 +7,47 @@ from . import loadDefaultParams as dp
 
 class EEGModel:
 
-    def __init__(self, model_params=None):
-        params = {}
-        for k in list(model_params.keys()): #this gets all keys in the model.params dictionary
-            if k.startswith('eeg'): # we are only interested in keys that have anything to do with eeg
-                params[k] = model_params[k] # we take those keys and insert them in a separate dictionary
+    def __init__(self, params):
 
-        if len(params)==0: # means that there were no keys starting with eeg in the model.params dictionary, so we
-            params = dp.loadDefaultParams()                   # load the default parameters
+        params = dp.loadDefaultParams(conductances = params.get("eeg_conductances"),
+                                      type_scr = params.get("eeg_type_scr"),
+                                      scr_pos=params.get("eeg_scr_pos"),
+                                      scr_spacing=params.get("eeg_scr_spacing")
+                                      )
+
+        self.conductances = params.eeg_conductances
+        self.type_scr = params.eeg_type_scr
+        self.scr_pos = params.eeg_scr_pos
+        self.scr_spacing = params.eeg_scr_spacing
+
 
         # Since the user should only be able to change the conductances, the type of the sources and the pos/spacing
         # we only need to have in the loadDefaultParams.py those three values.
 
-        # In which order should we loadDefaultParams? Bc if we load it here, then  params.get("eeg_conductances") is None:
-        # makes no sense because it will never be none, should we do a different type of test?
 
+        # TODO: When the user doesnt change all params accordingly we should give a warning saying it's gonna run with default values
+        # TODO: Define where is the fsaverage directory
 
-        # When the user doesnt change all params accordingly we should give a warning saying it's gonna run with default
-        # values g
+        #TODO: See if we actually need all those parameters as attributes, or if we just need to pass them once, and hence they are unnecessary
 
+        #fs_dir = fetch_fsverage(verbose=True)
 
-        if params.get("eeg_conductances") is None:
-            self.conductances = () # insert here standard values
-
-        if params.get("eeg_type_scr") is None or params.get("eeg_type_scr")=="volumetric":
-            self.type_scr = "volumetric"
-            if params.get("eeg_scr_pos") is None:
-                self.source_pos = 5.0
-            else:
-                self.source_pos = params.get("eeg_scr_pos")
-
-        if params.get("eeg_type_scr") == "surface":
-            self.type_scr = "surface"
-            if params.get("eeg_scr_spacing") is None:
-                self.source_spacing = "oct6"
-            else:
-                self.source_spacing = params.get("eeg_scr_pos")
-        else:
-            raise Error here
-            print("This is not a valid source type")
-
-        # if params.get("eeg_scr_spacing") is not None:
-        #     self.source_spacing = None
-            # need to make sure that in this case the sources are surface
-
-        if params.get("eeg_scr_pos") is None:
-            self.source_spacing = 5.0
-
-
-
-
-        fs_dir = fetch_fsverage(verbose=True)
         self.subjects_dir = op.dirname(fs_dir)
-        self.subject = 'fsaverage'
-        self.subject_dir = None
-        self.trans = 'fsaverage'
-        self.src = op.join(fs_dir, 'bem', 'fsaverage-ico-5-src.fif')
-        self.bem = op.join(fs_dir, 'bem', 'fsaverage-5120-5120-5120-bem-sol.fif')
+        #TODO: treat subject and trans file as the same thing, we should always have one trans file per subject
+        self.subject = 'fsaverage' #TODO: understand what does subject = 'fsaverage' do
+        self.subject_dir = None #TODO: understand that if the subject is fsaverage, if we actually need a subject directory
+        self.trans = 'fsaverage' #TODO: understand what does trans = 'fsaverage' do
 
-        # if params.get("kind") is None:
+        self.src = op.join(fs_dir, 'bem', 'fsaverage-ico-5-src.fif') # TODO: make our own source model, maybe then we can keep the function set_scr
+        self.bem = op.join(fs_dir, 'bem', 'fsaverage-5120-5120-5120-bem-sol.fif') # TODO: make our own BEM model, maybe then we can keep the function set_bem
+
+        # TODO: Does mne.setup_volume_source_space always require a subject_dir?
+
         self.kind = "standard_1020"
-        # else:
-        #     self.kind = params.get("kind")
-        # same for head_size, sfreq, ch_types ?
-        montage = mne.channels.make_standard_montage(kind, head_size='auto')
+
+        montage = mne.channels.make_standard_montage(self.kind, head_size='auto')
         info = mne.create_info(ch_names=montage.ch_names, sfreq=100., ch_types='eeg')
         info.set_montage(montage)
-
-        # treat subject and trans file as the same thing, we should always have one trans file per subject
-
 
 
         self.loadRawData()
