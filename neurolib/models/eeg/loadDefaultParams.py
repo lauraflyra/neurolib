@@ -6,7 +6,7 @@ from ...utils.collections import dotdict
 # Since the user should only be able to change the conductances, the type of the sources and the pos/spacing
 # we only need to have in the loadDefaultParams.py those four values
 
-def loadDefaultParams(conductances=None, type_scr=None, scr_pos=None, scr_spacing=None):
+def loadDefaultParams(conductances=None, type_scr=None, scr_pos=None, scr_spacing=None, sfreq = None):
     """Load default parameters for the EEG Model
 
     :return: A dictionary with the default parameters of the model
@@ -23,6 +23,9 @@ def loadDefaultParams(conductances=None, type_scr=None, scr_pos=None, scr_spacin
         params.eeg_scr_pos = 5.0
     if scr_spacing is None:  # scr spacing refers to surface sources
         params.eeg_scr_spacing = "oct6"
+    if sfreq is None: #sfreq refers to the sample rate of the data using when creating the info file with the montage
+        params.eeg_montage_sfreq = 256
+
 
     return params
 

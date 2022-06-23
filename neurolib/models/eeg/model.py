@@ -8,17 +8,24 @@ from . import loadDefaultParams as dp
 class EEGModel:
 
     def __init__(self, params):
+        """
+        sfreq refers to the sample rate of the data using when creating the info file with the montage
+        """
 
         params = dp.loadDefaultParams(conductances = params.get("eeg_conductances"),
                                       type_scr = params.get("eeg_type_scr"),
                                       scr_pos=params.get("eeg_scr_pos"),
-                                      scr_spacing=params.get("eeg_scr_spacing")
+                                      scr_spacing=params.get("eeg_scr_spacing"),
+                                      sfreq = params.get("eeg_montage_sfreq")
                                       )
+
+
 
         self.conductances = params.eeg_conductances
         self.type_scr = params.eeg_type_scr
         self.scr_pos = params.eeg_scr_pos
         self.scr_spacing = params.eeg_scr_spacing
+        self.sfreq = params.eeg_montage_sfreq
 
 
         # Since the user should only be able to change the conductances, the type of the sources and the pos/spacing
@@ -28,9 +35,8 @@ class EEGModel:
         # TODO: When the user doesnt change all params accordingly we should give a warning saying it's gonna run with default values
         # TODO: Define where is the fsaverage directory
 
-        #TODO: See if we actually need all those parameters as attributes, or if we just need to pass them once, and hence they are unnecessary
 
-        #fs_dir = fetch_fsverage(verbose=True)
+        fs_dir = "path/to/fsaverage"
 
         self.subjects_dir = op.dirname(fs_dir)
         #TODO: treat subject and trans file as the same thing, we should always have one trans file per subject
@@ -46,8 +52,8 @@ class EEGModel:
         self.kind = "standard_1020"
 
         montage = mne.channels.make_standard_montage(self.kind, head_size='auto')
-        info = mne.create_info(ch_names=montage.ch_names, sfreq=256., ch_types='eeg')
-        info.set_montage(montage)
+        self.info = mne.create_info(ch_names=montage.ch_names, sfreq=self.sfreq, ch_types='eeg')
+        self.info.set_montage(montage)
 
 
         self.loadRawData()
