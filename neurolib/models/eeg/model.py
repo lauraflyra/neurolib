@@ -22,7 +22,7 @@ class EEGModel:
 
 
         # Since the user should only be able to change the conductances, the type of the sources and the pos/spacing
-        # we only need to have in the loadDefaultParams.py those three values.
+        # we only need to have in the loadDefaultParams.py those four values.
 
 
         # TODO: When the user doesnt change all params accordingly we should give a warning saying it's gonna run with default values
@@ -46,7 +46,7 @@ class EEGModel:
         self.kind = "standard_1020"
 
         montage = mne.channels.make_standard_montage(self.kind, head_size='auto')
-        info = mne.create_info(ch_names=montage.ch_names, sfreq=100., ch_types='eeg')
+        info = mne.create_info(ch_names=montage.ch_names, sfreq=256., ch_types='eeg')
         info.set_montage(montage)
 
 

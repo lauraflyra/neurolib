@@ -4,7 +4,7 @@ from ...utils.collections import dotdict
 
 
 # Since the user should only be able to change the conductances, the type of the sources and the pos/spacing
-# we only need to have in the loadDefaultParams.py those three values
+# we only need to have in the loadDefaultParams.py those four values
 
 def loadDefaultParams(conductances=None, type_scr=None, scr_pos=None, scr_spacing=None):
     """Load default parameters for the EEG Model
