@@ -16,7 +16,7 @@ def loadDefaultParams(conductances=None, type_scr=None, scr_pos=None, scr_spacin
     params_eeg = dotdict({})
 
     if conductances is None:
-        params_eeg.eeg_conductances = ()  # insert here standard values
+        params_eeg.eeg_conductances = (0.3, 0.006, 0.3)
     if type_scr is None:
         params_eeg.eeg_type_scr = "volumetric"
     if scr_pos is None:  # source positions refers to volumetric sources
