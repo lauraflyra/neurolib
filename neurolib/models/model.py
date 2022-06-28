@@ -3,7 +3,7 @@ import xarray as xr
 import numpy as np
 
 from ..models import bold
-from ..model import eeg
+from ..models import eeg
 
 from ..utils.collections import dotdict
 

@@ -59,6 +59,7 @@ class EEGModel:
         self.n_jobs = 1
         self.N = params.N # this is number of nodes
 
+        self.EEG = None
         #everything that the user can change should go to params
 
     # TODO: handlining standart parameter differntly
@@ -77,8 +78,13 @@ class EEGModel:
             surface = kwargs.get("surface",'white')
             verbose = kwargs.get("verbose", None)
 
-            self.src = mne.setup_source_space(self.subject, subject_dir = self.subject_dir, spacing = spacing,
-                                    add_dist = add_dist, n_jobs = n_jobs, surface = surface, verbose = verbose)
+            self.src = mne.setup_source_space(self.subject,
+                                              subject_dir=self.subject_dir,
+                                              spacing=spacing,
+                                              add_dist=add_dist,
+                                              n_jobs=self.n_jobs,
+                                              surface = surface,
+                                              verbose = verbose)
 
         if type == 'volumetric':
 
@@ -123,8 +129,8 @@ class EEGModel:
         leadfield = forward_solution['sol']['data']
 
         # somewhere here should be the downsampling function
-        downsampled = self.downsampling(self, leadfield, atlas,
-                                       averaging_method)
+        downsampled = self.downsampling(self, leadfield, atlas=None,
+                                       averaging_method=None)
 
         #which type of activity are we expecting here? Firing rates?
         # we need to think about units, it's in mV, conductivities also have units.
@@ -141,7 +147,8 @@ class EEGModel:
 
 #IN MODELS/statsmodels.compat.PY
 
-from ..models import eeg
+from ...models import eeg
+import logging
 
 class Model:
 
@@ -150,31 +157,39 @@ class Model:
 
     def initializeEEG(self, trans=None, src=None, bem=None):
         # WHY IS self.boldInitialized = False in the beggining of this function????
-
-        # Where is this attribute created??
-        self.eegModel = eeg.EEGModel(self.params, trans,src,bem)
+        self.eegInitialized = False
+        self.eegModel = eeg.EEGModel(self.params)
         self.eegInitialized = True
 
         pass
 
     def simulateEEG(self, t, variables, append):
+        """Gets the default output of the model and simulates the EEG model.
+        Adds the simulated BOLD signal to outputs.
+        """
 
         #here we need to check how many nodes we have in the whole brain model, model.params.N == ???
         #because this influences the sources and leadfield and transformation
 
 
         if self.EEGInitialized:
-            #bla bla
 
-            self.eegModel.run(activity)
+            eeg_input = self.outputs[self.default_output]
+            self.eegModel.run(eeg_input, append=append)
 
-        pass
+            #t_EEG = self.eegModel.t_EEG
+            EEG = self.eegModel.EEG
+            #self.setOutput("EEG.t_EEG", t_EEG)
+            self.setOutput("EEG.EEG", EEG)
 
-    def run(self,
-        bold = False,
-        eeg = False,
-        ....):
+        else:
+            logging.warn("BOLD model not initialized, "
+                         "not simulating BOLD. Use `run(bold=True)`")
 
-        #here model.EEGModel should already be initialized somewhere!!
+
+
+    def run(self, bold = False, eeg = False):
+
+
 
         pass
