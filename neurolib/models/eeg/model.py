@@ -26,6 +26,8 @@ class EEGModel:
         self.scr_spacing = params_eeg.eeg_scr_spacing
         self.sfreq = params_eeg.eeg_montage_sfreq
 
+        self.N = params.get("N")  # this is number of nodes
+        # TODO: somwhere compare N with the number of regions in the atlas. Assert they are the same
 
         # Since the user should only be able to change the conductances, the type of the sources and the pos/spacing
         # we only need to have in the loadDefaultParams.py those four values.
@@ -33,18 +35,15 @@ class EEGModel:
 
         # TODO: When the user doesnt change all params accordingly we should give a warning saying it's gonna run with default values
 
-        self.subjects_dir = "../../data/datasets/eeg_fsaverage"
-
+        self.subject_dir = "../../data/datasets/eeg_fsaverage"
         self.subject = 'fsaverage'
-        self.subject_dir = None
         self.trans = 'fsaverage' #TODO: understand what does trans = 'fsaverage' do
 
+        self.bem = self.set_bem()
+        self.src = self.set_src()
 
-        self.src = None
-        self.bem = None
         # TODO: make our own BEM model, maybe then we can keep the function set_bem
         # TODO: make our own source model, maybe then we can keep the function set_scr
-        # TODO: Does mne.setup_volume_source_space always require a subject_dir?
 
         # TODO: maybe keep default files for src and bem
 
@@ -52,6 +51,7 @@ class EEGModel:
         montage = mne.channels.make_standard_montage(self.kind, head_size='auto')
         self.info = mne.create_info(ch_names=montage.ch_names, sfreq=self.sfreq, ch_types='eeg')
         self.info.set_montage(montage)
+
 
         #attributes needed to make forward solution
         self.mindist = 0.0
@@ -66,12 +66,17 @@ class EEGModel:
     def set_bem(self, ico = 4, conductivity = (0.3,0.006, 0.3), verbose = None):
         print("If you set the volumetric source with the bem before this, do it again! Otherwise, it's using the bem from the fsaverage!!")
 
-        model = mne.make_bem_model(self.subject, ico = ico, conductivity = conductivity,
-                                   subjects_dir = self.subjects_dir, verbose = verbose)
-        self.bem = mne.make_bem_solution(model)
 
-    def set_src(self, type = 'volumetric', **kwargs):
+    def set_bem(self):
+        model = mne.make_bem_model(self.subject, ico = 4, conductivity = self.conductances,
+                                   subjects_dir = self.subject_dir)
+        bem = mne.make_bem_solution(model)
+        return bem
+
+    def set_src(self):
+        type = self.type_scr
         if type == 'surface':
+
             spacing = kwargs.get("spacing", 'oct6')
             add_dist = kwargs.get("add_dist", 'patch')
             self.n_jobs = kwargs.get("n_jobs", 1)
@@ -86,29 +91,15 @@ class EEGModel:
                                               surface = surface,
                                               verbose = verbose)
 
+            src = mne.setup_source_space(self.subject, subject_dir = self.subject_dir, spacing = self.scr_spacing,
+                                    add_dist = "patch")
+
+
         if type == 'volumetric':
-
-            pos = kwargs.get("pos", 5.0)
-            mri = kwargs.get("mri",None)
-            sphere = kwargs.get("sphere", None)
-            bem = self.bem
-            surface = kwargs.get("surface", None)
-            self.mindist = kwargs.get("mindist",5.0)
-            exclude = kwargs.get("exclude", 0.)
-            volume_label = kwargs.get("volume_label", None)
-            add_interpolator = kwargs.get("add_interpolator", True)
-            sphere_units = kwargs.get("sphere_units", 'm')
-            single_volume = kwargs.get("single_volume", False)
-            verbose = kwargs.get("verbose", None)
-
-            self.src = mne.setup_volume_source_space(subject=self.subject, pos=pos, mri=mri, sphere=sphere, bem=bem,
-                                        surface=surface,mindist=self.mindist, exclude=exclude,
-                                        subjects_dir=self.subjects_dir, volume_label=volume_label,
-                                        add_interpolator=add_interpolator,sphere_units=sphere_units,
-                                        single_volume=single_volume, verbose=verbose)
-
-        #if the person wants to know which kwargs to use, they should refer to the mne library
-
+            src = mne.setup_volume_source_space(subject=self.subject, bem=self.bem,
+                                        subjects_dir=self.subject_dir,
+                                        add_interpolator=False)
+        return src
 
     def downsampling(self):
         # TODO: GO MARTIN
@@ -122,15 +113,18 @@ class EEGModel:
         #check wether we downsample here or not, ask Martin and Maria about downsampling
         #maybe this doesnt make sense, maybe calculate leadfields here and not before???
 
-        forward_solution = mne.make_forward_solution(self.raw.info, trans=self.trans, src=self.src, bem=self.bem,
-                                meg=False, eeg=True, mindist=self.mindist, n_jobs=self.n_jobs,
-                                verbose=True)
+        forward_solution = mne.make_forward_solution(self.info, trans=self.trans, src=self.src, bem=self.bem,
+                                meg=False, eeg=True, mindist=0.0)
+
+
 
         leadfield = forward_solution['sol']['data']
 
         # somewhere here should be the downsampling function
+
         downsampled = self.downsampling(self, leadfield, atlas=None,
                                        averaging_method=None)
+
 
         #which type of activity are we expecting here? Firing rates?
         # we need to think about units, it's in mV, conductivities also have units.
