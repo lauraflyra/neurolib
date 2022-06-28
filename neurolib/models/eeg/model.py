@@ -32,12 +32,8 @@ class EEGModel:
 
 
         # TODO: When the user doesnt change all params accordingly we should give a warning saying it's gonna run with default values
-        # TODO: Define where is the fsaverage directory
 
-
-        fs_dir = "path/to/fsaverage"
-
-        self.subjects_dir = op.dirname(fs_dir)
+        self.subjects_dir = "../../data/datasets/eeg_fsaverage"
 
         self.subject = 'fsaverage'
         self.subject_dir = None
