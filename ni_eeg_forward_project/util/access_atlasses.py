@@ -17,6 +17,9 @@ def get_labels_of_points(points, atlas="aal2"):
     else:
         raise
 
+    affine = atlas_img.affine               # transformation from voxel to mni-space
+    affine_inverse = np.linalg.inv(affine)  # mni to "voxel" space
+
     # get voxel codes
     atlas_img.get_fdata()
 
@@ -24,18 +27,16 @@ def get_labels_of_points(points, atlas="aal2"):
 
 
 @numba.njit()
-def get_backprojection(point, atlas_img):
+def get_backprojection(point, affine, affine_inverse):
     """ Transform MNI-mm-point into voxel-number.
         :point : 3d point in MNI-coordinate space (mm)
     """
     # Remark: This function assumes continuous (no gaps) definition of the atlas.
 
-    affine_inverse = np.linalg.inv(atlas_img.affine)
-
-    point_expanded = np.hstack((point, 1))
+    point_expanded = np.hstack((point, 1))  # expand to apply matrix multiplications with the affine
     back_proj = affine_inverse @ point_expanded    # project the point from mni to voxel
 
     # round to voxel resolution
-    back_proj_rounded = np.round(np.diag(affine_inverse) * back_proj, 0) * np.diag(atlas_img.affine)
+    back_proj_rounded = np.round(np.diag(affine_inverse) * back_proj, 0) * np.diag(affine)
 
     return back_proj_rounded
