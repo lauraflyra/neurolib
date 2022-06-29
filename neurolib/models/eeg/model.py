@@ -60,6 +60,7 @@ class EEGModel:
         self.N = params.N # this is number of nodes
 
         self.EEG = None
+        self.t_EEG = None
         #everything that the user can change should go to params
 
     # TODO: handlining standart parameter differntly
@@ -139,51 +140,5 @@ class EEGModel:
     pass
 
 
-#IN MODELS/statsmodels.compat.PY
-
-from ...models import eeg
-import logging
-
-class Model:
-
-    def __init__(self):
-        self.eegInitialized = False
-
-    def initializeEEG(self, trans=None, src=None, bem=None):
-        # WHY IS self.boldInitialized = False in the beggining of this function????
-        self.eegInitialized = False
-        self.eegModel = eeg.EEGModel(self.params)
-        self.eegInitialized = True
-
-        pass
-
-    def simulateEEG(self, t, variables, append):
-        """Gets the default output of the model and simulates the EEG model.
-        Adds the simulated BOLD signal to outputs.
-        """
-
-        #here we need to check how many nodes we have in the whole brain model, model.params.N == ???
-        #because this influences the sources and leadfield and transformation
 
 
-        if self.EEGInitialized:
-
-            eeg_input = self.outputs[self.default_output]
-            self.eegModel.run(eeg_input, append=append)
-
-            #t_EEG = self.eegModel.t_EEG
-            EEG = self.eegModel.EEG
-            #self.setOutput("EEG.t_EEG", t_EEG)
-            self.setOutput("EEG.EEG", EEG)
-
-        else:
-            logging.warn("BOLD model not initialized, "
-                         "not simulating BOLD. Use `run(bold=True)`")
-
-
-
-    def run(self, bold = False, eeg = False):
-
-
-
-        pass
