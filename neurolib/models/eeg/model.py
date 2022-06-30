@@ -1,16 +1,18 @@
 import numpy as np
 import mne
 import os.path as op
-from . import loadDefaultParams as dp
-
+import loadDefaultParams as dp
+from neurolib.utils.collections import dotdict
 
 
 class EEGModel:
 
-    def __init__(self, params):
+    def __init__(self, params=None):
         """
         sfreq refers to the sample rate of the data using when creating the info file with the montage
         """
+        if params is None:
+            params = dotdict({})
 
         params_eeg = dp.loadDefaultParams(conductances = params.get(
             "eeg_conductances"),
@@ -108,7 +110,7 @@ class EEGModel:
 
 #IN MODELS/statsmodels.compat.PY
 
-from ..models import eeg
+#from ..models import eeg
 
 class Model:
 
@@ -139,8 +141,7 @@ class Model:
 
     def run(self,
         bold = False,
-        eeg = False,
-        ....):
+        eeg = False):
 
         #here model.EEGModel should already be initialized somewhere!!
 

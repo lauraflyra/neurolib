@@ -1,6 +1,5 @@
 import numpy as np
-
-from ...utils.collections import dotdict
+from neurolib.utils.collections import dotdict
 
 
 # Since the user should only be able to change the conductances, the type of the sources and the pos/spacing
