@@ -82,7 +82,7 @@ class EEGModel:
         #output size = self.N
         pass
 
-    def run(self,  activity, append = False):
+    def run(self,  eeg_input, append = False):
         #append is when the simulation was already run before and we want to continue to run it
 
         #this is supposed to do the matrix multiplication leadfield @ activity
@@ -105,10 +105,18 @@ class EEGModel:
         # activity should probably be in Hz, not kHz as in aln.
         # Hopf has no units
         # Try first with aln, and figure out the correct scale. Then figure out other models without units.
+        result = downsampled @ eeg_input
         
+        # TODO: rewrite , check how they do it for BOLD
+        if append:
+            self.EEG.append(result)
 
-        result = downsampled @ activity
-        return result
+        else:
+            self.EEG = result
+        # do we need this?
+        self.t_EEG = None
+
+        return
 
     pass
 

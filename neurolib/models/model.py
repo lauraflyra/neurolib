@@ -70,8 +70,12 @@ class Model:
 
 
     def initializeEEG(self):
-        # ???: WHY IS self.boldInitialized = False in the beggining of this
-        # self.eegInitialized = False
+        # TODO: WHY IS self.boldInitialized = False in the beggining of
+        #  this
+        self.eegInitialized = False
+        if not hasattr(self, "eegInputTransform"):
+            self.eegInputTransform = None
+        # TODO: figure out eeg input transform
         self.eegModel = eeg.EEGModel(self.params)
         self.eegInitialized = True
 
@@ -126,13 +130,21 @@ class Model:
                 # the default output is used as the input for the bold model
                 if svn == self.default_output:
                     eeg_input = sv[:, self.startindt:]
-                    # TODO: ask about what the following means:
+                    # TODO: ask about what the following in bold simulate
+                    #  means:
                     # only if the length of the output has a zero mod to the sampling rate,
                     # the downsampled output from the boldModel can correctly appended to previous data
                     # so: we are lazy here and simply disable appending in that case ...
+                    # TODO: check why info files needs frequency -
+                    #  determined by sampling rate of data
+
+                    # transform bold input according to self.boldInputTransform
+                    if self.eegInputTransform:
+                        eeg_input = self.eegInputTransform(eeg_input)
 
                     self.eegModel.run(eeg_input, append=append)
 
+                    # TODO: should user be able to change frequency of EEG
                     t_EEG = self.eegModel.t_EEG
                     EEG = self.eegModel.EEG
                     self.setOutput("EEG.t_EEG", t_EEG)
@@ -366,7 +378,8 @@ class Model:
             remainingChunkSize = int(round((totalDuration - lastT) / dt))
             currentChunkSize = min(chunksize, remainingChunkSize)
 
-            self.autochunk(chunksize=currentChunkSize, append_outputs=append_outputs, bold=bold)
+            self.autochunk(chunksize=currentChunkSize,
+                           append_outputs=append_outputs, bold=bold, eeg=eeg)
             # we save the last simulated time step
             lastT += currentChunkSize * dt
             # or
