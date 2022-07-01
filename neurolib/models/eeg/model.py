@@ -1,16 +1,18 @@
 import numpy as np
 import mne
 import os.path as op
-from . import loadDefaultParams as dp
-
+import loadDefaultParams as dp
+from neurolib.utils.collections import dotdict
 
 
 class EEGModel:
 
-    def __init__(self, params):
+    def __init__(self, params=None):
         """
         sfreq refers to the sample rate of the data using when creating the info file with the montage
         """
+        if params is None:
+            params = dotdict({})
 
         params_eeg = dp.loadDefaultParams(conductances = params.get(
             "eeg_conductances"),
@@ -37,6 +39,7 @@ class EEGModel:
 
         self.subject_dir = "../../data/datasets/eeg_fsaverage"
         self.subject = 'fsaverage'
+        self.subject_dir = None
         self.trans = 'fsaverage' #TODO: understand what does trans = 'fsaverage' do
 
         self.bem = self.set_bem()
@@ -52,20 +55,8 @@ class EEGModel:
         self.info = mne.create_info(ch_names=montage.ch_names, sfreq=self.sfreq, ch_types='eeg')
         self.info.set_montage(montage)
 
-
-        #attributes needed to make forward solution
-        self.mindist = 0.0
-        self.ignore_ref = False # we don't understand this
-        self.n_jobs = 1
-        self.N = params.N # this is number of nodes
-
         self.EEG = None
         self.t_EEG = None
-        #everything that the user can change should go to params
-
-    # TODO: handlining standart parameter differntly
-    def set_bem(self, ico = 4, conductivity = (0.3,0.006, 0.3), verbose = None):
-        print("If you set the volumetric source with the bem before this, do it again! Otherwise, it's using the bem from the fsaverage!!")
 
 
     def set_bem(self):
@@ -77,24 +68,8 @@ class EEGModel:
     def set_src(self):
         type = self.type_scr
         if type == 'surface':
-
-            spacing = kwargs.get("spacing", 'oct6')
-            add_dist = kwargs.get("add_dist", 'patch')
-            self.n_jobs = kwargs.get("n_jobs", 1)
-            surface = kwargs.get("surface",'white')
-            verbose = kwargs.get("verbose", None)
-
-            self.src = mne.setup_source_space(self.subject,
-                                              subject_dir=self.subject_dir,
-                                              spacing=spacing,
-                                              add_dist=add_dist,
-                                              n_jobs=self.n_jobs,
-                                              surface = surface,
-                                              verbose = verbose)
-
             src = mne.setup_source_space(self.subject, subject_dir = self.subject_dir, spacing = self.scr_spacing,
                                     add_dist = "patch")
-
 
         if type == 'volumetric':
             src = mne.setup_volume_source_space(subject=self.subject, bem=self.bem,
@@ -122,10 +97,8 @@ class EEGModel:
         leadfield = forward_solution['sol']['data']
 
         # somewhere here should be the downsampling function
-
         downsampled = self.downsampling(self, leadfield, atlas=None,
-                                       averaging_method=None)
-
+                                        averaging_method=None)
 
         #which type of activity are we expecting here? Firing rates?
         # we need to think about units, it's in mV, conductivities also have units.
