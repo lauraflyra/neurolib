@@ -1,0 +1,1 @@
+from .access_atlases import get_labels_of_points
