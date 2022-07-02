@@ -1,215 +1,125 @@
 import numpy as np
-
 import mne
-from mne.datasets import eegbci
-from mne.datasets import fetch_fsaverage
 import os.path as op
-
+import loadDefaultParams as dp
+from neurolib.utils.collections import dotdict
 
 
 class EEGModel:
 
-    # def __init__(self, params, N, subject="fsaverage", subject_dir = None, trans=None, src=None, bem=None, raw_fname = None):
-    def __init__(self, params, N):
+    def __init__(self, params=None):
+        """
+        sfreq refers to the sample rate of the data using when creating the info file with the montage
+        """
+        if params is None:
+            params = dotdict({})
 
-        fs_dir = fetch_fsverage(verbose=True)
-        self.subjects_dir = op.dirname(fs_dir)
+        params_eeg = dp.loadDefaultParams(conductances = params.get(
+            "eeg_conductances"),
+                                      type_scr = params.get("eeg_type_scr"),
+                                      scr_pos=params.get("eeg_scr_pos"),
+                                      scr_spacing=params.get("eeg_scr_spacing"),
+                                      sfreq = params.get("eeg_montage_sfreq")
+                                      )
+
+        self.conductances = params_eeg.eeg_conductances
+        self.type_scr = params_eeg.eeg_type_scr
+        self.scr_pos = params_eeg.eeg_scr_pos
+        self.scr_spacing = params_eeg.eeg_scr_spacing
+        self.sfreq = params_eeg.eeg_montage_sfreq
+
+        self.N = params.get("N")  # this is number of nodes
+        # TODO: somwhere compare N with the number of regions in the atlas. Assert they are the same
+
+        # Since the user should only be able to change the conductances, the type of the sources and the pos/spacing
+        # we only need to have in the loadDefaultParams.py those four values.
+
+
+        # TODO: When the user doesnt change all params accordingly we should give a warning saying it's gonna run with default values
+
+        self.subject_dir = "../../data/datasets/eeg_fsaverage"
         self.subject = 'fsaverage'
         self.subject_dir = None
-        self.trans = 'fsaverage'
-        self.src = op.join(fs_dir, 'bem', 'fsaverage-ico-5-src.fif')
-        self.bem = op.join(fs_dir, 'bem', 'fsaverage-5120-5120-5120-bem-sol.fif')
-        self.raw = None
-        self.raw_fname, = eegbci.load_data(subject=1, runs=[6])
-        self.loadRawData()
+        self.trans = 'fsaverage' #TODO: understand what does trans = 'fsaverage' do
+
+        self.bem = self.set_bem()
+        self.src = self.set_src()
+
+        # TODO: make our own BEM model, maybe then we can keep the function set_bem
+        # TODO: make our own source model, maybe then we can keep the function set_scr
+
+        # TODO: maybe keep default files for src and bem
+
+        self.kind = "standard_1020"
+        montage = mne.channels.make_standard_montage(self.kind, head_size='auto')
+        self.info = mne.create_info(ch_names=montage.ch_names, sfreq=self.sfreq, ch_types='eeg')
+        self.info.set_montage(montage)
+
+        self.EEG = None
+        self.t_EEG = None
 
 
+    def set_bem(self):
+        model = mne.make_bem_model(self.subject, ico = 4, conductivity = self.conductances,
+                                   subjects_dir = self.subject_dir)
+        bem = mne.make_bem_solution(model)
+        return bem
 
- ##########################################
-        # First draft that was temporarily rejected
-        #
-        #
-        # self.subject = subject
-        #
-        # # subject should always be a string
-        # # assert subject is string
-        #
-        # self.subject_dir = subject_dir
-        # # have supported data file and path
-        #
-        # self.src = src
-        # # assert src is correct file type
-        # self.trans = trans  # do we calculate trans if not given?? Or do we use fsaverage trans?
-        # self.bem = bem
-        # # assert bem is correct file type
-        #
-        # if self.subject == "fsaverage":
-        #     self.loadSubjectData()
-        #
-        # self.raw_fname = raw_fname #info gives electrodes positions
-        # #check that raw_fname is in the correct format
-        # # assert raw_fname is edf file
-        #
-        # if self.raw_fname is None:
-        #     # we use what's in example in mne
-        #     self.raw_fname, = eegbci.load_data(subject=1, runs=[6])
-        # self.loadRawData()
-        # pass
-
-    #
-    # def loadSubjectData(self):
-    #
-    #     fs_dir = fetch_fsverage(verbose=True)
-    #     subjects_dir = op.dirname(fs_dir)
-    #     self.trans = "fsaverage"
-    #     if self.src is None:
-    #         self.src = op.join(fs_dir, 'bem', 'fsaverage-ico-5-src.fif')
-    #     if self.bem is None:
-    #         self.bem = op.join(fs_dir, 'bem', 'fsaverage-5120-5120-5120-bem-sol.fif')
-    #
-
-
-    def loadRawData(self, montage_name='standard_1005'):
-        self.raw = mne.io.read_raw_edf(self.raw_fname, preload=True)
-
-        # Clean channel names to be able to use a standard 1005 montage
-        # check how this would be for a diff montage!
-        if montage_name == 'standard_1005':
-            new_names = dict(
-                (ch_name,
-                 ch_name.rstrip('.').upper().replace('Z', 'z').replace('FP', 'Fp'))
-                for ch_name in raw.ch_names)
-            self.raw.rename_channels(new_names)
-        else:
-            pass
-
-        # Read and set the EEG electrode locations, which are already in fsaverage's
-        # space (MNI space) for standard_1020:
-        montage = mne.channels.make_standard_montage(montage_name)
-        self.raw.set_montage(montage)
-        self.raw.set_eeg_reference(projection=True)  # needed for inverse modeling
-
-    def set_subject_and_trans(self, subject, subject_dir, trans):
-        #do some assertions here
-        self.subject = subject
-        self.subject_dir = subject_dir
-        self.trans = trans
-
-        print("If you change here, you should check that bem/trans/raw are accordingly modified")
-
-    def set_bem(self, ico = 4, conductivity = (0.3,0.006, 0.3), verbose = None):
-        print("If you set the volumetric source with the bem before this, do it again! Otherwise, it's using the bem from the fsaverage!!")
-
-        model = mne.make_bem_model(self.subject, ico = ico, conductivity = conductivity,
-                                   subjects_dir = self.subjects_dir, verbose = verbose)
-        self.bem = mne.make_bem_solution(model)
-
-    def set_src(self, type = 'volumetric', **kwargs):
+    def set_src(self):
+        type = self.type_scr
         if type == 'surface':
-            spacing = kwargs.get("spacing", 'oct6')
-            add_dist = kwargs.get("add_dist", 'patch')
-            n_jobs = kwargs.get("n_jobs", 1)
-            surface = kwargs.get("surface",'white')
-            verbose = kwargs.get("verbose", None)
-
-            self.src = mne.setup_source_space(self.subject, subject_dir = self.subject_dir, spacing = spacing,
-                                    add_dist = add_dist, n_jobs = n_jobs, surface = surface, verbose = verbose)
+            src = mne.setup_source_space(self.subject, subject_dir = self.subject_dir, spacing = self.scr_spacing,
+                                    add_dist = "patch")
 
         if type == 'volumetric':
+            src = mne.setup_volume_source_space(subject=self.subject, bem=self.bem,
+                                        subjects_dir=self.subject_dir,
+                                        add_interpolator=False)
+        return src
 
-            pos = kwargs.get("pos", 5.0)
-            mri = kwargs.get("mri",None)
-            sphere = kwargs.get("sphere", None)
-            bem = self.bem
-            surface = kwargs.get("surface", None)
-            mindist = kwargs.get("mindist",5.0)
-            exclude = kwargs.get("exclude", 0.)
-            volume_label = kwargs.get("volume_label", None)
-            add_interpolator = kwargs.get("add_interpolator", True)
-            sphere_units = kwargs.get("sphere_units", 'm')
-            single_volume = kwargs.get("single_volume", False)
-            verbose = kwargs.get("verbose", None)
+    def downsampling(self):
+        # TODO: GO MARTIN
+        #output size = self.N
+        pass
 
-            self.src = mne.setup_volume_source_space(subject=self.subject, pos=pos, mri=mri, sphere=sphere, bem=bem,
-                                        surface=surface,mindist=mindist, exclude=exclude,
-                                        subjects_dir=self.subjects_dir, volume_label=volume_label,
-                                        add_interpolator=add_interpolator,sphere_units=sphere_units,
-                                        single_volume=single_volume, verbose=verbose)
+    def run(self,  eeg_input, append = False):
+        #append is when the simulation was already run before and we want to continue to run it
 
-        #if the person wants to know which kwargs to use, they should refer to the mne library
-
-
-
-    # def set_trans(self):
-    #
-    #     print("You can do it yourself using mne.gui.corregistration!")
-    #
-    #     print("If you change here, you should check that bem/trans/raw are accordingly modified")
-    #     pass
-
-    def set_raw(self, raw_fname, montage_name='standard_1005'):
-        self.raw_fname = raw_fname
-        self.loadRawData(montage_name=montage_name)
-
-
-    def run(self,  activity, append):
         #this is supposed to do the matrix multiplication leadfield @ activity
         #check wether we downsample here or not, ask Martin and Maria about downsampling
         #maybe this doesnt make sense, maybe calculate leadfields here and not before???
 
-
-        leadfield = mne.make_forward_model()
-
-
-        result = leadfield @ activity
-        return result
+        forward_solution = mne.make_forward_solution(self.info, trans=self.trans, src=self.src, bem=self.bem,
+                                meg=False, eeg=True, mindist=0.0)
 
 
 
+        leadfield = forward_solution['sol']['data']
 
+        # somewhere here should be the downsampling function
+        downsampled = self.downsampling(self, leadfield, atlas=None,
+                                        averaging_method=None)
 
+        #which type of activity are we expecting here? Firing rates?
+        # we need to think about units, it's in mV, conductivities also have units.
+        # activity should probably be in Hz, not kHz as in aln.
+        # Hopf has no units
+        # Try first with aln, and figure out the correct scale. Then figure out other models without units.
+        result = downsampled @ eeg_input
+        
+        # TODO: rewrite , check how they do it for BOLD
+        if append:
+            self.EEG.append(result)
 
+        else:
+            self.EEG = result
+        # do we need this?
+        self.t_EEG = None
 
+        return
 
     pass
 
 
-#IN MODELS/statsmodels.compat.PY
-
-from ..models import eeg
-
-class Model:
-
-    def __init__(self):
-        self.eegInitialized = False
-
-    def initializeEEG(self, trans=None, src=None, bem=None):
-        # WHY IS self.boldInitialized = False in the beggining of this function????
-
-        #????????????????????????????????????? Where is this attribute created??
-        self.eegModel = eeg.EEGModel(self.params, trans,src,bem)
-        self.eegInitialized = True
-
-        pass
-
-    def simulateEEG(self, t, variables, append):
-
-        #here we need to check how many nodes we have in the whole brain model, model.params.N == ???
-        #because this influences the sources and leadfield and transformation
 
 
-        if self.EEGInitialized:
-            #bla bla
-
-            self.eegModel.run(activity)
-
-        pass
-
-    def run(self,
-        bold = False,
-        eeg = False,
-        ....):
-
-        #here model.EEGModel should already be initialized somewhere!!
-
-        pass
