@@ -28,7 +28,7 @@ def create_label_lut(path: str) -> dict:
 def get_labels_of_points(points: np.ndarray, atlas="aal2") -> tuple[list[bool], np.ndarray, list[str]]:
     """ Gives labels of regions the points fall into.
 
-        :param points : ndarray of points defined in MNI space (mm).
+        :param points : Nx3 ndarray of points defined in MNI space (mm).
         :param atlas :  Specification of the anatomical atlas. Remark: Currently only AAL2 is supported.
         :return :       Tuple. First element is a list of bools, indicating for each point if a valid assignment within
                         the space defined by the atlas was found. Second element array of the assigned label-codes.
@@ -49,8 +49,8 @@ def get_labels_of_points(points: np.ndarray, atlas="aal2") -> tuple[list[bool], 
     # ToDo: make sure relative paths work.
     # Load atlas (integer encoded volume and string-labels).
     if atlas == "aal2":
-        atlas_img = nibabel.load("AAL2.nii")
-        atlas_labels_lut = create_label_lut("AAL2.xml")
+        atlas_img = nibabel.load("../../neurolib/data/datasets/aal/atlas/AAL2.nii")
+        atlas_labels_lut = create_label_lut("../../neurolib/data/datasets/aal/atlas/AAL2.xml")
     else:
         raise ValueError
 
