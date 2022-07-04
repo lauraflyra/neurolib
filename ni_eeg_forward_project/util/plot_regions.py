@@ -23,12 +23,15 @@ def plot_glassbrain_projections(fwd: forward,
     indices_region = np.where(label_codes == region_label)[0]
 
     fig, axs = plt.subplots(3, 1)
+    axs[0].axis('equal')
     axs[0].plot(dip_pos[:, 0], dip_pos[:, 1], 'o', alpha=0.05)
     axs[0].plot(dip_pos[indices_region, 0], dip_pos[indices_region, 1], 'ro', alpha=0.7)
 
+    axs[1].axis('equal')
     axs[1].plot(dip_pos[:, 1], dip_pos[:, 2], 'o', alpha=0.05)
     axs[1].plot(dip_pos[indices_region, 1], dip_pos[indices_region, 2], 'ro', alpha=0.7)
 
+    axs[2].axis('equal')
     axs[2].plot(dip_pos[:, 0], dip_pos[:, 2], 'o', alpha=0.05)
     axs[2].plot(dip_pos[indices_region, 0], dip_pos[indices_region, 2], 'ro', alpha=0.7)
 
