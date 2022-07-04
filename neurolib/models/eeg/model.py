@@ -28,7 +28,15 @@ class EEGModel:
         self.scr_spacing = params_eeg.eeg_scr_spacing
         self.sfreq = params_eeg.eeg_montage_sfreq
 
+        # TODO: only give N and dt instead of params!
         self.N = params.get("N")  # this is number of nodes
+        self.dt = params.get("dt")  # dt of input activity in ms
+        # TODO: check
+        # self.samplingRate_NDt = int(round(self.sfreq / self.dt))
+        self.samplingRate_NDt = int(round(self.sfreq * self.dt))
+        self.idxLastT = 0  # Index of the last computed t
+        # downsample (100 Hz
+        # EEG sampling rate)
         # TODO: somwhere compare N with the number of regions in the atlas. Assert they are the same
 
         # Since the user should only be able to change the conductances, the type of the sources and the pos/spacing
@@ -55,8 +63,9 @@ class EEGModel:
         self.info = mne.create_info(ch_names=montage.ch_names, sfreq=self.sfreq, ch_types='eeg')
         self.info.set_montage(montage)
 
-        self.EEG = None
-        self.t_EEG = None
+        # TODO : why ndmin=2 for t?
+        self.EEG = np.array([], dtype="f", ndmin=2)
+        self.t_EEG = np.array([], dtype="f", ndmin=2)
 
 
     def set_bem(self):
@@ -83,7 +92,7 @@ class EEGModel:
         test = np.ones(leadfield.shape[0], self.N)
         return test
 
-    def run(self,  eeg_input, append = False):
+    def run(self,  activity, append = False):
         #append is when the simulation was already run before and we want to continue to run it
 
         #this is supposed to do the matrix multiplication leadfield @ activity
@@ -108,16 +117,35 @@ class EEGModel:
         # Hopf has no units
         # Try first with aln, and figure out the correct scale. Then figure out other models without units.
 
-        result = downsampled @ eeg_input
+        EEG_output = downsampled @ activity
 
         # TODO: rewrite , check how they do it for BOLD
-        if append:
-            self.EEG.append(result)
 
+        # downsample to EEG rate
+        EEG_resampled = EEG_output[
+                :, self.samplingRate_NDt - np.mod(self.idxLastT - 1,
+                                                  self.samplingRate_NDt)::self.samplingRate_NDt]
+        t_new_idx = self.idxLastT + np.arange(activity.shape[1])
+        t_EEG_resampled = (
+                t_new_idx[self.samplingRate_NDt - np.mod(self.idxLastT - 1,
+                                                         self.samplingRate_NDt):: self.samplingRate_NDt]
+                * self.dt
+        )
+
+        if self.EEG.shape[1] == 0:
+            # add new data
+            self.t_EEG = t_EEG_resampled
+            self.EEG = EEG_resampled
+        elif append is True:
+            # append new data to old data
+            self.t_EEG = np.hstack((self.t_EEG, t_EEG_resampled))
+            self.EEG = np.hstack((self.EEG, EEG_resampled))
         else:
-            self.EEG = result
-        # do we need this? yes downsampling!!!
-        self.t_EEG = None
+            # overwrite old data
+            self.t_EEG = t_EEG_resampled
+            self.EEG = EEG_resampled
+
+        self.idxLastT = self.idxLastT + activity.shape[1]
 
         return
 
