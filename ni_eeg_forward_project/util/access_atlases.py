@@ -24,7 +24,6 @@ def create_label_lut(path: str) -> dict:
     return label_lut
 
 
-# TODO: the function has to perform well enough to do checks for 1000-10000 dipoles.
 def get_labels_of_points(points: np.ndarray, atlas="aal2") -> tuple[list[bool], np.ndarray, list[str]]:
     """ Gives labels of regions the points fall into.
 
@@ -46,7 +45,6 @@ def get_labels_of_points(points: np.ndarray, atlas="aal2") -> tuple[list[bool], 
     if not points.shape[1] == 3:
         raise ValueError
 
-    # ToDo: make sure relative paths work.
     # Load atlas (integer encoded volume and string-labels).
     if atlas == "aal2":
         atlas_img = nibabel.load("../../neurolib/data/datasets/aal/atlas/AAL2.nii")
