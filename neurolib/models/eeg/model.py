@@ -77,10 +77,11 @@ class EEGModel:
                                         add_interpolator=False)
         return src
 
-    def downsampling(self):
+    def downsampling(self, leadfield, atlas=None, averaging_method=None):
         # TODO: GO MARTIN
         #output size = self.N
-        pass
+        test = np.ones(leadfield.shape[0], self.N)
+        return test
 
     def run(self,  eeg_input, append = False):
         #append is when the simulation was already run before and we want to continue to run it
@@ -95,25 +96,27 @@ class EEGModel:
 
 
         leadfield = forward_solution['sol']['data']
+        print(leadfield.shape)
 
         # somewhere here should be the downsampling function
         downsampled = self.downsampling(self, leadfield, atlas=None,
                                         averaging_method=None)
-
+        print(downsampled.shape)
         #which type of activity are we expecting here? Firing rates?
         # we need to think about units, it's in mV, conductivities also have units.
         # activity should probably be in Hz, not kHz as in aln.
         # Hopf has no units
         # Try first with aln, and figure out the correct scale. Then figure out other models without units.
+
         result = downsampled @ eeg_input
-        
+
         # TODO: rewrite , check how they do it for BOLD
         if append:
             self.EEG.append(result)
 
         else:
             self.EEG = result
-        # do we need this?
+        # do we need this? yes downsampling!!!
         self.t_EEG = None
 
         return
