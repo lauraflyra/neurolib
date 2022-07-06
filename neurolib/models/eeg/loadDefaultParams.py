@@ -5,28 +5,26 @@ from neurolib.utils.collections import dotdict
 # Since the user should only be able to change the conductances, the type of the sources and the pos/spacing
 # we only need to have in the loadDefaultParams.py those four values
 
-def loadDefaultParams(conductances=None, type_scr=None, scr_pos=None, scr_spacing=None, sfreq = None):
+def loadDefaultParams(params_eeg):
     """Load default parameters for the EEG Model
 
     :return: A dictionary with the default parameters of the model
     :rtype: dict
     """
-
-    params_eeg = dotdict({})
-
-    if conductances is None:
+    count = 0
+    if params_eeg.conductances is None:
         params_eeg.eeg_conductances = (0.3, 0.006, 0.3)
-    if type_scr is None:
+    if params_eeg.type_scr is None:
         params_eeg.eeg_type_scr = "volumetric"
-    if scr_pos is None:  # source positions refers to volumetric sources
+    if params_eeg.scr_pos is None:  # source positions refers to volumetric
+        # sources
         params_eeg.eeg_scr_pos = 5.0
-    if scr_spacing is None:  # scr spacing refers to surface sources
+    if params_eeg.scr_spacing is None:  # scr spacing refers to surface sources
         params_eeg.eeg_scr_spacing = "oct6"
-    if sfreq is None: #sfreq refers to the sample rate of the data using when creating the info file with the montage
+    if params_eeg.sfreq is None: #sfreq refers to the sample rate of the
+        # data using when creating the info file with the montage
         params_eeg.eeg_montage_sfreq = 256
 
-
-    return params_eeg
 
 # TODO: insert in the README the info about what scr_pos and scr_spacing and that the user should always write in the params dictionary following this nomenclature rule
 # TODO: insert in README that if scr_spacing is changed, but the scr_type is not, then we are still gonna use volumetric with standard value for it
