@@ -32,8 +32,8 @@ class EEGModel:
         self.N = params.get("N")  # this is number of nodes
         self.dt = params.get("dt")  # dt of input activity in ms
         # TODO: check
-        # self.samplingRate_NDt = int(round(self.sfreq / self.dt))
-        self.samplingRate_NDt = int(round(self.sfreq * self.dt))
+        self.samplingRate_NDt = int(round(1/(self.sfreq * (self.dt/1000))))
+
         self.idxLastT = 0  # Index of the last computed t
         # downsample (100 Hz
         # EEG sampling rate)
@@ -63,9 +63,8 @@ class EEGModel:
         self.info = mne.create_info(ch_names=montage.ch_names, sfreq=self.sfreq, ch_types='eeg')
         self.info.set_montage(montage)
 
-        # TODO : why ndmin=2 for t?
         self.EEG = np.array([], dtype="f", ndmin=2)
-        self.t_EEG = np.array([], dtype="f", ndmin=2)
+        self.t_EEG = np.array([], dtype="f", ndmin=1)
 
 
     def set_bem(self):
@@ -119,7 +118,7 @@ class EEGModel:
 
         EEG_output = downsampled @ activity
 
-        # TODO: rewrite , check how they do it for BOLD
+        # TODO: check with Laura
 
         # downsample to EEG rate
         EEG_resampled = EEG_output[
