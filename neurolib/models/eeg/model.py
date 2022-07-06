@@ -14,6 +14,8 @@ class EEGModel:
         if params is None:
             params = dotdict({})
 
+        #TODO: check, if the person didn't change any params, we actually create anything new, we just load the fsaverage forward solution
+
         params_eeg = dp.loadDefaultParams(conductances = params.get(
             "eeg_conductances"),
                                       type_scr = params.get("eeg_type_scr"),
@@ -44,7 +46,7 @@ class EEGModel:
 
 
         # TODO: When the user doesnt change all params accordingly we should give a warning saying it's gonna run with default values
-
+        # TODO: change directories the way that Nicola said
         self.subject_dir = "../../data/datasets/eeg_fsaverage"
         self.subject = 'fsaverage'
         self.subject_dir = None
