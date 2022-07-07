@@ -2,6 +2,7 @@ import numpy as np
 import mne
 import loadDefaultParams as dp
 from neurolib.utils.collections import dotdict
+import os
 
 
 class EEGModel:
@@ -46,7 +47,8 @@ class EEGModel:
 
         # TODO: When the user doesnt change all params accordingly we should give a warning saying it's gonna run with default values
         # TODO: change directories the way that Nicola said
-        self.subject_dir = "../../data/datasets/eeg_fsaverage"
+
+        self.subject_dir = os.path.join(os.path.dirname("eeg_fsaverage"), "..", "data", "datasets", "eeg_fsaverage")
         self.subject = 'fsaverage'
         self.subject_dir = None
         self.trans = 'fsaverage' #TODO: understand what does trans = 'fsaverage' do
@@ -78,7 +80,7 @@ class EEGModel:
         # TODO: catch for type being something wrong
         type = self.type_scr
         if type == 'surface':
-            src = mne.setup_source_space(self.subject, subject_dir = self.subject_dir, spacing = self.scr_spacing,
+            src = mne.setup_source_space(self.subject, subjects_dir = self.subject_dir, spacing = self.scr_spacing,
                                     add_dist = "patch")
 
         elif type == 'volumetric':
