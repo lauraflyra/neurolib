@@ -93,7 +93,7 @@ class EEGModel:
     def downsampling_dummy(self, leadfield):
         # TODO: GO MARTIN
         #output size = self.N
-        test = np.ones(leadfield.shape[0], self.N)
+        test = np.ones((leadfield.shape[0], self.N))
         return test
 
     def run(self,  activity, append = False):
@@ -112,7 +112,7 @@ class EEGModel:
         print(leadfield.shape)
 
         # somewhere here should be the downsampling function
-        downsampled = self.downsampling_dummy(self, leadfield)
+        downsampled = self.downsampling_dummy(leadfield)
         print(downsampled.shape)
         #which type of activity are we expecting here? Firing rates?
         # we need to think about units, it's in mV, conductivities also have units.
