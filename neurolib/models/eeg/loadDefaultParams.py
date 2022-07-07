@@ -11,7 +11,6 @@ def loadDefaultParams(params_eeg):
     :return: A dictionary with the default parameters of the model
     :rtype: dict
     """
-    count = 0
     if params_eeg.conductances is None:
         params_eeg.eeg_conductances = (0.3, 0.006, 0.3)
     if params_eeg.type_scr is None:
