@@ -64,7 +64,7 @@ def get_labels_of_points(points: np.ndarray, atlas="aal2") -> tuple[list[bool], 
             label_codes[point_idx] = codes[int(back_proj[0]), int(back_proj[1]), int(back_proj[2])]
 
         except IndexError:
-            logging.error("The atlas does not specify an assignment for the given MNI-coordinate.")
+            #logging.error("The atlas does not specify an assignment for the given MNI-coordinate.")
             label_codes[point_idx] = np.NAN
 
         if np.isnan(label_codes[point_idx]):
@@ -73,8 +73,11 @@ def get_labels_of_points(points: np.ndarray, atlas="aal2") -> tuple[list[bool], 
         else:
             points_found[point_idx] = True
             label_strings[point_idx] = atlas_labels_lut[str(int(label_codes[point_idx]))]   # ToDo: clean up type-
-                                                                                            # conversions.
-
+                                                                                       # conversions.
+    if sum(points_found) < n_points:
+        logging.error(f"The atlas does not specivy valid labels for all the given points.\n"
+                      f"Total number of points: (%s) out of which (%s) were validly assigned."
+                 % (n_points, sum(points_found)))
     return points_found, label_codes, label_strings
 
 
