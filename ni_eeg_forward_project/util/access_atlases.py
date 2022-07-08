@@ -75,7 +75,7 @@ def get_labels_of_points(points: np.ndarray, atlas="aal2") -> tuple[list[bool], 
             label_strings[point_idx] = atlas_labels_lut[str(int(label_codes[point_idx]))]   # ToDo: clean up type-
                                                                                        # conversions.
     if sum(points_found) < n_points:
-        logging.error(f"The atlas does not specivy valid labels for all the given points.\n"
+        logging.error(f"The atlas does not specify valid labels for all the given points.\n"
                       f"Total number of points: (%s) out of which (%s) were validly assigned."
                  % (n_points, sum(points_found)))
     return points_found, label_codes, label_strings
