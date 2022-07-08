@@ -25,5 +25,5 @@ def loadDefaultParams(params_eeg):
         params_eeg.eeg_montage_sfreq = 256
 
 
-# TODO: insert in the README the info about what scr_pos and scr_spacing and that the user should always write in the params dictionary following this nomenclature rule
-# TODO: insert in README that if scr_spacing is changed, but the scr_type is not, then we are still gonna use volumetric with standard value for it
+# TODO: insert in the README the info about what scr_spacing and that the user should always write in the params dictionary following this nomenclature rule
+# TODO: insert in README that for now we only use surface

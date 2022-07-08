@@ -3,6 +3,7 @@ import mne
 import loadDefaultParams as dp
 from neurolib.utils.collections import dotdict
 import os
+import logging
 
 
 class EEGModel:
@@ -31,14 +32,8 @@ class EEGModel:
         self.kind = None
         self.info = None
 
-        # TODO: check, if the user didn't change any params, we actually dont create anything new, we just load the fsaverage forward solution
-        if all(value == 0 for value in self.params_eeg.values()):
-            # TODO: load default fsaverage forward solution and change here
-            # TODO: When the user doesnt change all params accordingly we should give a warning saying it's gonna run with default values
-            self.forward_solution = None
-            # TODO: REMOVE THE NEXT LINES AS SOON AS WE SAVE A FORWARD SOLUTION
-            dp.loadDefaultParams(self.params_eeg)
-            self.initialize_solution()
+        if all(value is None for value in self.params_eeg.values()):
+            self.get_precomputed_solution()
 
         else:
             dp.loadDefaultParams(self.params_eeg)
@@ -54,8 +49,14 @@ class EEGModel:
         self.EEG = np.array([], dtype="f", ndmin=2)
         self.t_EEG = np.array([], dtype="f", ndmin=1)
 
-        # Since the user should only be able to change the conductances, the type of the sources and the pos/spacing
-        # we only need to have in the loadDefaultParams.py those four values.
+
+    def get_precomputed_solution(self):
+        logging.warning('This simulation is going to run with the default values and pre-computed forward solution, '
+                        'based on a surface source space for fsaverage brain')
+
+        fwd_file = os.path.join(os.path.dirname(__file__), "../..", "data", "datasets",
+                                "fsaverage_surface_src_fixed_orientation-fwd.fif")
+        self.forward_solution = mne.read_forward_solution(fwd_file)
 
     def initialize_solution(self):
         """
@@ -69,6 +70,8 @@ class EEGModel:
         self.bem = self.set_bem()
         self.eeg_type_src = "surface"
         self.src = self.set_src()
+        if self.src is None:
+            self.get_precomputed_solution()
 
         self.kind = "standard_1020"
         montage = mne.channels.make_standard_montage(self.kind, head_size='auto')
@@ -94,6 +97,7 @@ class EEGModel:
         #                                         add_interpolator=False)
 
         else:
+            logging.warning("This source type is not supported.")
             src = None
 
         return src
