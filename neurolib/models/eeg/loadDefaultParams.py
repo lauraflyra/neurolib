@@ -13,11 +13,11 @@ def loadDefaultParams(params_eeg):
     """
     if params_eeg.conductances is None:
         params_eeg.eeg_conductances = (0.3, 0.006, 0.3)
-    if params_eeg.type_scr is None:
-        params_eeg.eeg_type_scr = "volumetric"
-    if params_eeg.scr_pos is None:  # source positions refers to volumetric
-        # sources
-        params_eeg.eeg_scr_pos = 5.0
+    # if params_eeg.type_scr is None:
+    #     params_eeg.eeg_type_scr = "volumetric"
+    # if params_eeg.scr_pos is None:  # source positions refers to volumetric
+    #     # sources
+    #     params_eeg.eeg_scr_pos = 5.0
     if params_eeg.scr_spacing is None:  # scr spacing refers to surface sources
         params_eeg.eeg_scr_spacing = "oct6"
     if params_eeg.sfreq is None: #sfreq refers to the sample rate of the

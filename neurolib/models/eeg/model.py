@@ -14,8 +14,8 @@ class EEGModel:
 
         self.params_eeg = dotdict({})
         self.params_eeg.eeg_conductances = params.get("eeg_conductances")
-        self.params_eeg.eeg_type_scr = params.get("eeg_type_scr")
-        self.params_eeg.eeg_scr_pos = params.get("eeg_scr_pos")
+        # self.params_eeg.eeg_type_scr = params.get("eeg_type_scr")  # volumetric sources are not allowed
+        # self.params_eeg.eeg_scr_pos = params.get("eeg_scr_pos")   # volumetric sources are not allowed
         self.params_eeg.eeg_scr_spacing = params.get("eeg_scr_spacing")
         self.params_eeg.eeg_montage_sfreq = params.get("eeg_montage_sfreq")
 
@@ -26,6 +26,7 @@ class EEGModel:
         self.subject = None
         self.trans = None
         self.bem = None
+        self.eeg_type_src = None
         self.src = None
         self.kind = None
         self.info = None
@@ -66,6 +67,7 @@ class EEGModel:
         self.trans = 'fsaverage'
 
         self.bem = self.set_bem()
+        self.eeg_type_src = "surface"
         self.src = self.set_src()
 
         self.kind = "standard_1020"
@@ -81,15 +83,18 @@ class EEGModel:
 
     def set_src(self):
         # TODO: catch for type being something wrong
-        type = self.params_eeg.eeg_type_scr
+        type = self.eeg_type_src # if we want the source type to be in params_eeg, change this to self.params_egg.eeg_type_src
         if type == 'surface':
             src = mne.setup_source_space(self.subject, subjects_dir=self.subject_dir, spacing=self.params_eeg.eeg_scr_spacing,
                                          add_dist="patch")
 
-        elif type == 'volumetric':
-            src = mne.setup_volume_source_space(subject=self.subject, bem=self.bem, pos=self.params_eeg.eeg_scr_pos,
-                                                subjects_dir=self.subject_dir,
-                                                add_interpolator=False)
+        # elif type == 'volumetric':
+        #     src = mne.setup_volume_source_space(subject=self.subject, bem=self.bem, pos=self.params_eeg.eeg_scr_pos,
+        #                                         subjects_dir=self.subject_dir,
+        #                                         add_interpolator=False)
+
+        else:
+            src = None
 
         return src
 
