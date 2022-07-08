@@ -40,7 +40,6 @@ class EEGModel:
             dp.loadDefaultParams(self.params_eeg)
             self.initialize_solution()
 
-        # TODO: somewhere compare N with the number of regions in the atlas. Assert they are the same
 
         self.N = params.get("N")  # this is number of nodes
         self.dt = params.get("dt")  # dt of input activity in ms
@@ -87,7 +86,6 @@ class EEGModel:
         return bem
 
     def set_src(self):
-        # TODO: catch for type being something wrong
         type = self.eeg_type_src # if we want the source type to be in params_eeg, change this to self.params_egg.eeg_type_src
         if type == 'surface':
             src = mne.setup_source_space(self.subject, subjects_dir=self.subject_dir, spacing=self.params_eeg.eeg_scr_spacing,
@@ -107,6 +105,8 @@ class EEGModel:
     def downsampling_dummy(self, leadfield):
         # TODO: GO MARTIN
         # output size = self.N
+        # TODO: compare N with the number of regions in the atlas. Assert they are the same
+
         test = np.ones((leadfield.shape[0], self.N))
         return test
 
@@ -126,15 +126,9 @@ class EEGModel:
         # somewhere here should be the downsampling function
         downsampled = self.downsampling_dummy(leadfield)
         # print(downsampled.shape)
-        # TODO:which type of activity are we expecting here? Firing rates?
-        # we need to think about units, it's in mV, conductivities also have units.
-        # activity should probably be in Hz, not kHz as in aln.
-        # Hopf has no units
-        # Try first with aln, and figure out the correct scale. Then figure out other models without units.
+        # TODO: insert in the README info about the transformations used
 
         EEG_output = downsampled @ activity
-
-        # TODO: check with Laura
 
         # downsample to EEG rate
         EEG_resampled = EEG_output[
