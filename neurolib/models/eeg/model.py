@@ -54,7 +54,8 @@ class EEGModel:
         logging.warning('This simulation is going to run with the default values and pre-computed forward solution, '
                         'based on a surface source space for fsaverage brain')
 
-        fwd_file = os.path.join(os.path.dirname(__file__), "../..", "data", "datasets",
+        fwd_file = os.path.join(os.path.dirname(__file__), "../..", "data", "datasets", "eeg_fsaverage",
+                                "fsaverage_fwd_sol",
                                 "fsaverage_surface_src_fixed_orientation-fwd.fif")
         self.forward_solution = mne.read_forward_solution(fwd_file)
 
