@@ -33,6 +33,7 @@ class EEGModel:
         self.info = None
 
         if all(value is None for value in self.params_eeg.values()):
+            dp.loadDefaultParams(self.params_eeg)
             self.get_precomputed_solution()
 
         else:
