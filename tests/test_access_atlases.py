@@ -25,4 +25,5 @@ class TestAccessAtlases(unittest.TestCase):
     def test_filter_for_regions(self):
         regions = ["abc", "def"]
         labels = ["0", 0, np.NAN, "abc", "abcdef", "ABC"]
-        self.assertListEqual(access_atlases.filter_for_regions(labels, regions), [False, False, False, True, False, False])
+        self.assertListEqual(access_atlases.filter_for_regions(labels, regions),
+                             [False, False, False, True, False, False])

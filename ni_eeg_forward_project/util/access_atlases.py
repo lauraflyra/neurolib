@@ -2,14 +2,19 @@ import nibabel
 import numpy as np
 import logging
 from xml.etree import ElementTree
+import os
 
 
-def filter_for_regions(label_strings, regions) -> list[bool]:
+def filter_for_regions(label_strings: list[str], regions: list[str]) -> list[bool]:
     """ Create a list of bools if the label_strings are in the regions list.
+
+        :param label_strings: List of labels that dipoles got assigned to.
+        :param regions: List of strings that are the acronyms for the regions of interest.
+        :return: List of bools that, . Sorted according to the order of "label_strings".
     """
     # Remark: then outside this function the label codes and label-strings can be set to nan or 0 for dipoles that are
     #  not of interest such that downsampling works smoothly.
-    in_regions = [None] * len(regions)
+    in_regions = [None] * len(label_strings)
     for idx_label, label in enumerate(label_strings):
         if label in regions:
             in_regions[idx_label] = True
@@ -61,8 +66,9 @@ def get_labels_of_points(points: np.ndarray, atlas="aal2") -> tuple[list[bool], 
 
     # Load atlas (integer encoded volume and string-labels).
     if atlas == "aal2":
-        atlas_img = nibabel.load("../../neurolib/data/datasets/aal/atlas/AAL2.nii")
-        atlas_labels_lut = create_label_lut("../../neurolib/data/datasets/aal/atlas/AAL2.xml")
+        atlas_path = os.path.join(os.path.dirname(__file__), "../..", "neurolib", "data", "datasets", "aal", "atlas")
+        atlas_img = nibabel.load(os.path.join(atlas_path, "AAL2.nii"))
+        atlas_labels_lut = create_label_lut(os.path.join(atlas_path, "AAL2.xml"))
     else:
         raise ValueError
 
