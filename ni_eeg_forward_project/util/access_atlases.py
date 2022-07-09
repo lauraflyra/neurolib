@@ -4,6 +4,20 @@ import logging
 from xml.etree import ElementTree
 
 
+def filter_for_regions(label_strings, regions) -> list[bool]:
+    """ Create a list of bools if the label_strings are in the regions list.
+    """
+    # Remark: then outside this function the label codes and label-strings can be set to nan or 0 for dipoles that are
+    #  not of interest such that downsampling works smoothly.
+    in_regions = [None] * len(regions)
+    for idx_label, label in enumerate(label_strings):
+        if label in regions:
+            in_regions[idx_label] = True
+        else:
+            in_regions[idx_label] = False
+    return in_regions
+
+
 def create_label_lut(path: str) -> dict:
     """ Create a lookup table that contains "anatomical acronyms" corresponding to the encodings of the regions
         specified by the used anatomical atlas. Adds an empty label for code "0" if not specified otherwise by atlas.
