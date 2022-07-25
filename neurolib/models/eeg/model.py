@@ -1,6 +1,6 @@
 import numpy as np
 import mne
-import loadDefaultParams as dp
+import neurolib.models.eeg.loadDefaultParams as dp
 from neurolib.utils.collections import dotdict
 import os
 import logging
@@ -19,7 +19,7 @@ class EEGModel:
         # self.params_eeg.eeg_scr_pos = params.get("eeg_scr_pos")   # volumetric sources are not allowed
         self.params_eeg.eeg_scr_spacing = params.get("eeg_scr_spacing")
         self.params_eeg.eeg_montage_sfreq = params.get("eeg_montage_sfreq")
-
+        self.params_eeg.atlas = params.get("eeg_atlas")
 
         self.forward_solution = None
 
@@ -40,7 +40,6 @@ class EEGModel:
             dp.loadDefaultParams(self.params_eeg)
             self.initialize_solution()
 
-
         self.N = params.get("N")  # this is number of nodes
         self.dt = params.get("dt")  # dt of input activity in ms
 
@@ -48,7 +47,6 @@ class EEGModel:
         self.idxLastT = 0  # Index of the last computed t
         self.EEG = np.array([], dtype="f", ndmin=2)
         self.t_EEG = np.array([], dtype="f", ndmin=1)
-
 
     def get_precomputed_solution(self):
         logging.warning('This simulation is going to run with the default values and pre-computed forward solution, '
