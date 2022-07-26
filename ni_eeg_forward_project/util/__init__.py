@@ -1,1 +1,3 @@
 from .access_atlases import get_labels_of_points
+from .plot_regions import plot_glassbrain_projections
+from .downsample_leadfield import downsample_leadfield_matrix

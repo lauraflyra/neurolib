@@ -21,3 +21,9 @@ class TestAccessAtlases(unittest.TestCase):
         self.assertEqual(expected_result[0], points_valid)
         assert np.isnan(codes[0])
         self.assertEqual(expected_result[2], acronyms)
+
+    def test_filter_for_regions(self):
+        regions = ["abc", "def"]
+        labels = ["0", 0, np.NAN, "abc", "abcdef", "ABC"]
+        self.assertListEqual(access_atlases.filter_for_regions(labels, regions),
+                             [False, False, False, True, False, False])
