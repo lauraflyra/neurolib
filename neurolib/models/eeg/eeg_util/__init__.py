@@ -1,0 +1,2 @@
+from .access_atlases import get_labels_of_points, filter_for_regions
+from .downsample_leadfield import downsample_leadfield_matrix

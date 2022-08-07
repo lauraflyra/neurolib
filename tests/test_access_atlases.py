@@ -1,5 +1,5 @@
 import unittest
-from ni_eeg_forward_project.util import access_atlases
+from neurolib.models.eeg.eeg_util import access_atlases
 import numpy as np
 
 
