@@ -2,6 +2,7 @@ import numpy as np
 import mne
 import neurolib.models.eeg.loadDefaultParams as dp
 from neurolib.utils.collections import dotdict
+from neurolib.models.eeg.eeg_util import downsample_leadfield_matrix, get_labels_of_points
 import os
 import logging
 
@@ -22,6 +23,8 @@ class EEGModel:
         self.params_eeg.atlas = params.get("eeg_atlas")
 
         self.forward_solution = None
+        self.leadfield = None
+        self.unique_labels = None   # region labels that the leadfield matrix columns correspond to
 
         self.subject_dir = None
         self.subject = None
@@ -41,6 +44,8 @@ class EEGModel:
             self.initialize_solution()
 
         self.N = params.get("N")  # this is number of nodes
+        # Remark: here a check if self.N == regions of desired atlas would make sense. It requires a homogeneous
+        #  definition of the atlases/ number of region information.
         self.dt = params.get("dt")  # dt of input activity in ms
 
         self.samplingRate_NDt = int(round(1 / (self.params_eeg.eeg_montage_sfreq * (self.dt / 1000))))
@@ -56,6 +61,10 @@ class EEGModel:
                                 "fsaverage_fwd_sol",
                                 "fsaverage_surface_src_fixed_orientation-fwd.fif")
         self.forward_solution = mne.read_forward_solution(fwd_file)
+
+        default_lf_files = np.load(os.path.join(self.subject_dir, "default_leadfield.npz"))
+        self.unique_labels = default_lf_files["unique_labels"]
+        self.leadfield = default_lf_files["leadfield_downsampled"]
 
     def initialize_solution(self):
         """
@@ -100,33 +109,66 @@ class EEGModel:
 
         return src
 
-    def downsampling_dummy(self, leadfield):
-        # TODO: GO MARTIN
-        # output size = self.N
-        # TODO: compare N with the number of regions in the atlas. Assert they are the same
+    def downsampling(self):
+        """ This function takes in a forward solution that was computed for a surface source space. First, the forward
+            solution is converted to a solution of fixed dipole orientation. Then, each dipole is assigned to an atlas
+            region. Afterwards, all columns of the leadfield matrix that correspond to dipoles of the same region, are
+            averaged. The resulting leadfield matrix has the dimensions electrodes x atlas regions.
 
-        test = np.ones((leadfield.shape[0], self.N))
-        return test
+            :return:    Array of region-codes of the atlas and down sampled leadfield matrix with the columns sorted
+                        according to the region-codes in the array 'unique_labels'.
+            :rtype:     tuple[np.ndarray, np.ndarray]
+        """
+
+        # Fix the dipole orientation to surface normal. Requires surface source space for orientation information.
+        # This step results in a number of dipoles equal to the number of source locations.
+        fwd_fixed = mne.convert_forward_solution(self.forward_solution, surf_ori=True, force_fixed=True,
+                                                 use_cps=True)
+
+        if len(fwd_fixed["src"]) == 2:  # surface source space is divided into two hemispheres in mne
+
+            # 0 is left, 1 is right hemisphere
+            lh = fwd_fixed['src'][0]
+            dip_pos_lh = np.vstack(lh['rr'][lh['vertno']])
+            rh = fwd_fixed['src'][1]
+            dip_pos_rh = np.vstack(rh['rr'][rh['vertno']])
+
+            if dip_pos_lh.shape != dip_pos_rh.shape:
+                raise ValueError("Both hemispheres should contain the same number of sources.")
+
+            dip_pos = np.vstack((dip_pos_lh, dip_pos_rh))
+        else:
+            raise ValueError("Other format than expected for a surface source space for whole brain. Two hemispheres "
+                             "expected")
+
+        if self.trans == "fsaverage":
+            trans_path = os.path.join(self.subject_dir, "fsaverage", "bem", "fsaverage-trans.fif")
+            trafo = mne.read_trans(trans_path)
+        else:
+            trafo = mne.read_trans(self.trans)
+
+        dip_pos_mni = mne.head_to_mni(dip_pos, subject=self.subject, mri_head_t=trafo)   # convert from RAS to MNI space
+
+        points_found, label_codes, label_strings = get_labels_of_points(dip_pos_mni, atlas=self.params_eeg.atlas)
+
+        leadfield_full = fwd_fixed['sol']['data']
+        unique_labels, leadfield_downsampled = downsample_leadfield_matrix(leadfield_full, label_codes)
+
+        return unique_labels, leadfield_downsampled
 
     def run(self, activity, append=False):
         # append is when the simulation was already run before and we want to continue to run it
-
-        # this is supposed to do the matrix multiplication leadfield @ activity
-        # check wether we downsample here or not, ask Martin and Maria about downsampling
-        # maybe this doesnt make sense, maybe calculate leadfields here and not before???
 
         if self.forward_solution is None:
             self.forward_solution = mne.make_forward_solution(self.info, trans=self.trans, src=self.src, bem=self.bem,
                                                               meg=False, eeg=True, mindist=0.0)
 
-        leadfield = self.forward_solution['sol']['data']
+        if self.leadfield is None:
+            self.unique_labels, self.leadfield = self.downsampling()
 
-        # somewhere here should be the downsampling function
-        downsampled = self.downsampling_dummy(leadfield)
-        # print(downsampled.shape)
         # TODO: insert in the README info about the transformations used
 
-        EEG_output = downsampled @ activity
+        EEG_output = self.leadfield @ activity
 
         # downsample to EEG rate
         EEG_resampled = EEG_output[
@@ -155,5 +197,3 @@ class EEGModel:
         self.idxLastT = self.idxLastT + activity.shape[1]
 
         return
-
-    pass
