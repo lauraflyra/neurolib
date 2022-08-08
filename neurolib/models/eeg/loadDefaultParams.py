@@ -11,20 +11,20 @@ def loadDefaultParams(params_eeg):
     :return: A dictionary with the default parameters of the model
     :rtype: dict
     """
-    if params_eeg.conductances is None:
+    if params_eeg.eeg_conductances is None:
         params_eeg.eeg_conductances = (0.3, 0.006, 0.3)
-    # if params_eeg.type_scr is None:
+    # if params_eeg.eeg_type_scr is None:
     #     params_eeg.eeg_type_scr = "volumetric"
-    # if params_eeg.scr_pos is None:  # source positions refers to volumetric
+    # if params_eeg.eeg_scr_pos is None:  # source positions refers to volumetric
     #     # sources
     #     params_eeg.eeg_scr_pos = 5.0
-    if params_eeg.scr_spacing is None:  # scr spacing refers to surface sources
+    if params_eeg.eeg_scr_spacing is None:  # scr spacing refers to surface sources
         params_eeg.eeg_scr_spacing = "oct6"
-    if params_eeg.sfreq is None: #sfreq refers to the sample rate of the
+    if params_eeg.egg_montage_sfreq is None: #sfreq refers to the sample rate of the
         # data using when creating the info file with the montage
         params_eeg.eeg_montage_sfreq = 256
-    if params_eeg.atlas is None:
-        params_eeg.atlas = "aal2_cortical"  # the 80 cortical regions defined in the AAL2 atlas
+    if params_eeg.eeg_atlas is None:
+        params_eeg.eeg_atlas = "aal2"  # the 80 cortical regions defined in the AAL2 atlas # TODO: distinguish between AAL2 and AAL2 only cortical
 
 
 # TODO: insert in the README the info about what scr_spacing and that the user should always write in the params dictionary following this nomenclature rule
