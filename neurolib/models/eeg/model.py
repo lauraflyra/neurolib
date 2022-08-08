@@ -49,6 +49,7 @@ class EEGModel:
         self.dt = params.get("dt")  # dt of input activity in ms
 
         self.samplingRate_NDt = int(round(1 / (self.params_eeg.eeg_montage_sfreq * (self.dt / 1000))))
+        print("Sampling rate:",self.samplingRate_NDt)
         self.idxLastT = 0  # Index of the last computed t
         self.EEG = np.array([], dtype="f", ndmin=2)
         self.t_EEG = np.array([], dtype="f", ndmin=1)

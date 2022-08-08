@@ -151,8 +151,8 @@ class Model:
                     self.setOutput("EEG.EEG", EEG)
 
         else:
-            logging.warn("BOLD model not initialized, "
-                         "not simulating BOLD. Use `run(bold=True)`")
+            logging.warn("EEG model not initialized, "
+                         "not simulating EEG. Use `run(eeg=True)`")
 
     def checkChunkwise(self, chunksize):
         """Checks if the model fulfills requirements for chunkwise simulation.
