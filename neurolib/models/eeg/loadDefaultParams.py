@@ -24,7 +24,7 @@ def loadDefaultParams(params_eeg):
         # data using when creating the info file with the montage
         params_eeg.eeg_montage_sfreq = 256
     if params_eeg.eeg_atlas is None:
-        params_eeg.eeg_atlas = "aal2"  # the 80 cortical regions defined in the AAL2 atlas # TODO: distinguish between AAL2 and AAL2 only cortical
+        params_eeg.eeg_atlas = "aal2_cortical"  # the 80 cortical regions defined in the AAL2 atlas
 
 
 # TODO: insert in the README the info about what scr_spacing and that the user should always write in the params dictionary following this nomenclature rule
