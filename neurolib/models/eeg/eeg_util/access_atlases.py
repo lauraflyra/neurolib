@@ -3,6 +3,7 @@ import numpy as np
 import logging
 from xml.etree import ElementTree
 import os
+from neurolib.utils.atlases import AutomatedAnatomicalParcellation2
 
 
 def filter_for_regions(label_strings, regions):
@@ -49,7 +50,7 @@ def create_label_lut(path):
     return label_lut
 
 
-def get_labels_of_points(points, atlas="aal2"):
+def get_labels_of_points(points, atlas="aal2_cortical"):
     """Gives labels of regions the points fall into.
 
     :param points : Nx3 ndarray of points defined in MNI space (mm).
@@ -78,7 +79,7 @@ def get_labels_of_points(points, atlas="aal2"):
         raise ValueError
 
     # Load atlas (integer encoded volume and string-labels).
-    if atlas == "aal2":
+    if atlas == "aal2" or atlas == "aal2_cortical":
         atlas_path = os.path.join(
             os.path.dirname(__file__),
             "../../../..",
@@ -124,6 +125,19 @@ def get_labels_of_points(points, atlas="aal2"):
             f"Total number of points: (%s) out of which (%s) were validly assigned."
             % (n_points, sum(points_found))
         )
+
+    if atlas == "aal2_cortical":    # filter out the subcortical regions
+        aal_2 = AutomatedAnatomicalParcellation2()
+        regions = []
+        for r in aal_2.cortex:
+            regions.append(aal_2.aal2[r + 1])
+            in_regions = filter_for_regions(label_strings, regions)
+
+        for idx_point in range(len(points_found)):
+            if not in_regions[idx_point]:
+                label_codes[idx_point] = 0
+                label_strings[idx_point] = ""
+
     return points_found, label_codes, label_strings
 
 
