@@ -20,7 +20,7 @@ class EEGModel:
         # self.params_eeg.eeg_scr_pos = params.get("eeg_scr_pos")   # volumetric sources are not allowed
         self.params_eeg.eeg_scr_spacing = params.get("eeg_scr_spacing")
         self.params_eeg.eeg_montage_sfreq = params.get("eeg_montage_sfreq")
-        self.params_eeg.atlas = params.get("eeg_atlas")
+        self.params_eeg.eeg_atlas = params.get("eeg_atlas")
 
         self.forward_solution = None
         self.leadfield = None
@@ -149,7 +149,7 @@ class EEGModel:
 
         dip_pos_mni = mne.head_to_mni(dip_pos, subject=self.subject, mri_head_t=trafo)   # convert from RAS to MNI space
 
-        points_found, label_codes, label_strings = get_labels_of_points(dip_pos_mni, atlas=self.params_eeg.atlas)
+        points_found, label_codes, label_strings = get_labels_of_points(dip_pos_mni, atlas=self.params_eeg.eeg_atlas)
 
         leadfield_full = fwd_fixed['sol']['data']
         unique_labels, leadfield_downsampled = downsample_leadfield_matrix(leadfield_full, label_codes)
